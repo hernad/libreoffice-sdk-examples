@@ -272,7 +272,7 @@ ifeq "$(PROCTYPE)" "x86_64"
 UNOPKG_PLATFORM=MacOSX_x86_64
 endif
 endif
-JAVABIN=Commands
+JAVABIN=bin
 
 ifeq "$(PROCTYPE)" "x86"
 GCC_VERSION =$(shell gcc -dumpversion| cut -d"." -f1,2)
