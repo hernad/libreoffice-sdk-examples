@@ -23,6 +23,7 @@ include $(OO_SDK_HOME)/settings/dk.mk
 
 # debug option, default is no debug
 DEBUG=no
+DOLAR_PREFIX=
 ifeq "$(MAKECMDGOALS)" "debug"
 DEBUG=yes
 endif
@@ -48,14 +49,16 @@ JAVABIN=bin
 ifeq "$(PLATFORM)" "windows"
 # Settings for Windows using Microsoft compiler/linker
 
+DOLAR_PREFIX=$(strip \ )
 OS=WIN
-PS:=$(strip \ )
+#PS:=$(strip \ )
+PS:=/
 ICL=$$
 CC=cl
 LINK=link
 BUILDLIB=lib
 ECHO=@echo
-MKDIR=mkdir
+MKDIR=mkdir -p
 MV=move
 CAT=type
 OBJ_EXT=obj
@@ -65,17 +68,19 @@ SHAREDLIB_EXT=dll
 SHAREDLIB_OUT=$(OUT_BIN)
 UNOPKG_PLATFORM=Windows
 
-OSEP=^<
-CSEP=^>
+OSEP=\<
+CSEP=\>
 QUOTE=
 QM=
 SQM=
-ECHOLINE=@echo.
+ECHOLINE=@echo
 P2BG=
 
-DEL=del
-DELRECURSIVE=rd /S /Q
-URLPREFIX=file:///
+DEL=rm -f
+DELRECURSIVE=rm -rf
+COPY=cp
+#URLPREFIX=file://
+URLPREFIX=file://
 
 SALLIB=isal.lib
 CPPULIB=icppu.lib
@@ -83,7 +88,7 @@ CPPUHELPERLIB=icppuhelper.lib
 SALHELPERLIB=isalhelper.lib
 PURPENVHELPERLIB=ipurpenvhelper.lib
 
-BLANK= 
+BLANK=
 EMPTYSTRING=
 PATH_SEPARATOR=;
 
@@ -136,109 +141,6 @@ endif
 # use this for release version
 #EXE_LINK_FLAGS=/MAP /OPT:NOREF /SUBSYSTEM:CONSOLE /BASE:0x1100000
 #LIBRARY_LINK_FLAGS=/DLL
-endif	
-
-
-
-###########################################################################
-#
-# Solaris specific settings
-#
-###########################################################################
-ifeq "$(PLATFORM)" "solaris"
-# Settings for Solaris using GCC
-
-ifeq "$(PROCTYPE)" "sparc"
-PLATFORM=solsparc
-UNOPKG_PLATFORM=Solaris_SPARC
-JAVA_PROC_TYPE=sparc
-else
-ifeq "$(PROCTYPE)" "sparc64"
-PLATFORM=solsparc
-UNOPKG_PLATFORM=Solaris_SPARC64
-JAVA_PROC_TYPE=sparcv9
-else
-PLATFORM=solintel
-UNOPKG_PLATFORM=Solaris_x86
-JAVA_PROC_TYPE=i386
-endif
-endif
-
-OS=SOLARIS
-PS=/
-ICL=\$$
-CC=g++
-LINK=g++
-LIB=g++
-ECHO=@echo
-MKDIR=mkdir -p
-CAT=cat
-OBJ_EXT=o
-SHAREDLIB_EXT=so
-SHAREDLIB_PRE=lib
-SHAREDLIB_OUT=$(OUT_LIB)
-
-OSEP=\<
-CSEP=\>
-QUOTE=$(subst S,\,S)
-QM=\"
-SQM='
-ECHOLINE=@echo
-P2BG=&
-
-DEL=rm -f
-DELRECURSIVE=rm -rf
-COPY=cp
-URLPREFIX=file://
-
-COMID=gcc3
-CPPU_ENV=gcc3
-
-SALLIB=-luno_sal
-CPPULIB=-luno_cppu
-CPPUHELPERLIB=-luno_cppuhelper$(COMID)
-SALHELPERLIB=-luno_salhelper$(COMID)
-PURPENVHELPERLIB=-luno_purpenvhelper$(COMID)
-
-EMPTYSTRING=
-PATH_SEPARATOR=:
-
-# -O is necessary for inlining (see gcc documentation)
-ifeq "$(DEBUG)" "yes"
-OPT_FLAGS=-g
-else
-OPT_FLAGS=-O
-endif
-CC_FLAGS_JNI=-c -fpic $(OPT_FLAGS)
-CC_FLAGS=-c -fpic -fvisibility=hidden $(OPT_FLAGS)
-CC_INCLUDES=-I. -I$(OUT)/inc -I$(OUT)/inc/examples -I$(PRJ)/include
-SDK_JAVA_INCLUDES = -I"$(OO_SDK_JAVA_HOME)/include" -I"$(OO_SDK_JAVA_HOME)/include/solaris"
-
-# define for used compiler necessary for UNO
-
-CC_DEFINES_JNI=-DUNX -DSOLARIS -DCPPU_ENV=$(CPPU_ENV) -DGCC
-CC_DEFINES=-DUNX -DSOLARIS -DSPARC -DCPPU_ENV=$(CPPU_ENV)  -DHAVE_GCC_VISIBILITY_FEATURE -DGCC
-CC_OUTPUT_SWITCH=-o 
-
-LIBO_SDK_LDFLAGS_STDLIBS =
-
-LIBRARY_LINK_FLAGS=-w -mt -z combreloc -fPIC -PIC -temp=/tmp '-R$$ORIGIN' -z text -norunpath -G -Bdirect -Bdynamic -lpthread -lCrun -lc -lm
-COMP_LINK_FLAGS=$(LIBRARY_LINK_FLAGS)
-
-EXE_LINK_FLAGS=-w -mt -z combreloc -PIC -temp=/tmp -norunpath -Bdirect -z defs
-LINK_LIBS=-L"$(OUT)/lib" -L"$(OO_SDK_HOME)/lib" -L"$(OO_SDK_URE_LIB_DIR)"
-LINK_JAVA_LIBS=-L"$(OO_SDK_JAVA_HOME)/jre/lib/$(JAVA_PROC_TYPE)"
-
-ifeq "$(PROCTYPE)" "sparc64"
-CC_FLAGS+=-m64
-LIBRARY_LINK_FLAGS+=-m64
-EXE_LINK_FLAGS+=-m64
-endif
-
-ifneq "$(OO_SDK_URE_HOME)" ""
-URE_MISC=$(OO_SDK_URE_HOME)/share/misc
-endif
-
 endif
 
 
@@ -370,8 +272,7 @@ ifeq "$(PROCTYPE)" "x86_64"
 UNOPKG_PLATFORM=MacOSX_x86_64
 endif
 endif
-#JAVABIN=Commands
-JAVABIN=bin
+JAVABIN=Commands
 
 ifeq "$(PROCTYPE)" "x86"
 GCC_VERSION =$(shell gcc -dumpversion| cut -d"." -f1,2)
@@ -410,7 +311,7 @@ QM=\"
 SQM='
 ECHOLINE=@echo
 P2BG=&
-    
+
 DEL=rm -f
 DELRECURSIVE=rm -rf
 COPY=cp
@@ -558,7 +459,7 @@ LIBO_SDK_LDFLAGS_STDLIBS =
 LIBRARY_LINK_FLAGS=-shared -Wl,-z,origin '-Wl,-rpath,$$ORIGIN'
 COMP_LINK_FLAGS=$(LIBRARY_LINK_FLAGS)
 
-EXE_LINK_FLAGS=-Wl,--allow-shlib-undefined 
+EXE_LINK_FLAGS=-Wl,--allow-shlib-undefined
 LINK_LIBS=-L"$(OUT)/lib" -L"$(OO_SDK_HOME)/lib" -L"$(OO_SDK_URE_LIB_DIR)" $(PTHREAD_LIBS)
 LINK_JAVA_LIBS=-L"$(OO_SDK_JAVA_HOME)/jre/lib/$(JAVA_PROC_TYPE)"
 
